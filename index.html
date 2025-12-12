@@ -574,18 +574,21 @@
         onSnapshot(donationsQuery, (snapshot) => {
             const donorsList = document.getElementById('donorsList');
             
-            if (snapshot.empty) {
-                donorsList.innerHTML = '<span class="no-donors">No donors yet. Be the first!</span>';
-            } else {
-                const donors = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
+            // Filter donations to only show ones with amount > 0
+            const donors = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.amount && data.amount > 0) {
                     donors.push({
                         name: data.donorId || 'Anonymous',
                         amount: data.amount
                     });
-                });
-                
+                }
+            });
+            
+            if (donors.length === 0) {
+                donorsList.innerHTML = '<span class="no-donors">No donors yet. Be the first!</span>';
+            } else {
                 donorsList.innerHTML = donors.map(donor => `
                     <div class="donor-tag">
                         <span>${donor.name}</span>
@@ -597,9 +600,22 @@
 
         // Donation function
         window.donate = async function(amount) {
-            const donorName = prompt("Enter your name (optional - press Cancel or leave blank to donate anonymously):");
-            const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
+            // First redirect to payment
+            alert(`🙏 You chose to donate ₹${amount}!\n\nYou will now be redirected to Razorpay payment page.\n\nAfter payment, please enter your name to be added to our donors list.`);
+            window.open(window.RAZORPAY_LINK, '_blank');
             
+            // Then ask for name
+            setTimeout(() => {
+                const donorName = prompt("Thank you for donating! Enter your name to be shown in our donors list (optional - press Cancel or leave blank to be anonymous):");
+                const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
+                
+                // Save to Firebase
+                saveDonation(amount, name);
+            }, 500);
+        };
+
+        // Save donation to Firebase
+        async function saveDonation(amount, name) {
             try {
                 // Add donation to Firestore
                 await addDoc(collection(db, 'donations'), {
@@ -625,13 +641,12 @@
                     });
                 }
 
-                alert(`🙏 Thank you ${name} for choosing to donate ₹${amount}!\n\nYou will now be redirected to Razorpay payment page.`);
-                window.open(window.RAZORPAY_LINK, '_blank');
+                alert(`✅ Your donation of ₹${amount} has been recorded! Thank you ${name}! 🙏`);
             } catch (error) {
                 console.error("Error adding donation:", error);
-                alert("There was an error processing your donation. Please try again.");
+                alert("There was an error saving your donation details. But your payment should be processed. Please contact us on X @BestOnInternt");
             }
-        };
+        }
 
         // Custom amount donation function
         window.donateCustomAmount = function() {
@@ -645,6 +660,9 @@
             donate(customAmount);
             document.getElementById('customAmountInput').value = '';
         };
+
+        // Make saveDonation available globally
+        window.saveDonation = saveDonation;
 
         // Modal functions
         window.showModal = function(action) {
