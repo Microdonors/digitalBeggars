@@ -540,13 +540,13 @@
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDsLlw3kv5nU3HQmwGnGrbYEyZJ7oGe4",
-            authDomain: "train-game-baz90.firebaseapp.com",
-            projectId: "train-game-baz90",
-            storageBucket: "train-game-baz90.firebasestorage.app",
+            apiKey: "AIzaSyBOaZSaLiw36uV8hMGwwGkbnrOyzjZq6s4",
+            authDomain: "train-game-be290.firebaseapp.com",
+            projectId: "train-game-be290",
+            storageBucket: "train-game-be290.firebasestorage.app",
             messagingSenderId: "516766219873",
-            appId: "1:516766219873:web:38aec1e7e5ee866e32b420",
-            measurementId: "G-RSVLNY3K93"
+            appId: "1:516766219873:web:386ec1e7e5e6866e32b420",
+            measurementId: "G-RSVLNY1K93"
         };
 
         // Initialize Firebase
@@ -600,18 +600,16 @@
 
         // Donation function
         window.donate = async function(amount) {
-            // First redirect to payment
-            alert(`🙏 You chose to donate ₹${amount}!\n\nYou will now be redirected to Razorpay payment page.\n\nAfter payment, please enter your name to be added to our donors list.`);
-            window.open(window.RAZORPAY_LINK, '_blank');
+            // Ask for name first
+            const donorName = prompt(`You chose to donate ₹${amount}!\n\nEnter your name to be shown in our donors list (or press Cancel/leave blank to donate anonymously):`);
+            const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
             
-            // Then ask for name
-            setTimeout(() => {
-                const donorName = prompt("Thank you for donating! Enter your name to be shown in our donors list (optional - press Cancel or leave blank to be anonymous):");
-                const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
-                
-                // Save to Firebase
-                saveDonation(amount, name);
-            }, 500);
+            // Save to Firebase first
+            await saveDonation(amount, name);
+            
+            // Then redirect to payment
+            alert(`🙏 Thank you ${name}!\n\nYou will now be redirected to Razorpay to complete your ₹${amount} payment.`);
+            window.open(window.RAZORPAY_LINK, '_blank');
         };
 
         // Save donation to Firebase
