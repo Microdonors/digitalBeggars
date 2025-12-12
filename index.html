@@ -1,0 +1,738 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Beggar - Help Us Survive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .tagline {
+            color: #555;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px;
+            border-radius: 18px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.95;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 35px;
+            border-radius: 18px;
+            margin-bottom: 40px;
+            border-left: 5px solid #7e22ce;
+        }
+
+        .info-section h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .info-content {
+            color: #333;
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+
+        .info-content p {
+            margin-bottom: 12px;
+        }
+
+        .info-content strong {
+            color: #1e3c72;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .donation-section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .amount-btn {
+            padding: 25px;
+            font-size: 1.6em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .amount-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        .amount-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .custom-amount-section {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        #customAmountInput {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 3px solid #10b981;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        #customAmountInput:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .custom-amount-btn {
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(126, 34, 206, 0.3);
+        }
+
+        .custom-amount-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(126, 34, 206, 0.4);
+            background: linear-gradient(135deg, #6b21a8 0%, #581c87 100%);
+        }
+
+        .custom-amount-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .actions-section {
+            margin-bottom: 40px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+        }
+
+        .action-btn {
+            padding: 18px;
+            font-size: 1.05em;
+            font-weight: 600;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .action-btn.love {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+
+        .action-btn.scold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .action-btn.talk {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .action-btn.envy {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .action-btn.enemy {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .donors-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 35px;
+            border-radius: 18px;
+            margin-bottom: 40px;
+            border-left: 5px solid #f59e0b;
+        }
+
+        .donors-section h2 {
+            color: #92400e;
+            margin-bottom: 25px;
+        }
+
+        .donors-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-height: 50px;
+        }
+
+        .donor-tag {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: #92400e;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .donor-tag .donor-amount {
+            background: #f59e0b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+
+        .no-donors {
+            color: #92400e;
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 25px;
+            border-top: 3px solid #f0f0f0;
+            color: #666;
+        }
+
+        footer a {
+            color: #7e22ce;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #6b21a8;
+            text-decoration: underline;
+        }
+
+        .disclaimer {
+            font-size: 0.95em;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 8% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 550px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            position: absolute;
+            right: 25px;
+            top: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        #modalTitle {
+            margin-bottom: 25px;
+            color: #1e3c72;
+        }
+
+        #donorNameInput {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            margin-bottom: 15px;
+        }
+
+        #donorNameInput:focus {
+            outline: none;
+            border-color: #7e22ce;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 25px;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: #7e22ce;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.15em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(126, 34, 206, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .amount-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .custom-amount-section {
+                flex-direction: column;
+            }
+
+            .info-section, .donors-section {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🙏 Digital Beggar</h1>
+            <p class="tagline">Your kindness keeps us alive... or roast us, we can take it!</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalDonors">0</div>
+                <div class="stat-label">Kind Souls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">₹<span id="totalAmount">0</span></div>
+                <div class="stat-label">Total Received</div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📖 Why Are We Begging & What You Can Get From Us</h2>
+            <div class="info-content">
+                <p>Our story is not smaller than a film,<br>
+                We are beggars online. First of kind.</p>
+                
+                <strong>What we can give u is:</strong>
+                <p>
+                    We listen to u,<br>
+                    We can face ur anger,<br>
+                    We are ready to get scold,<br>
+                    We are ready to chat,<br>
+                    We are ready to love & be hated,<br>
+                    We are ready to humilate your enemies<br>
+                    And more............
+                </p>
+                
+                <p><strong>Be the first few to support this!!</strong><br>
+                We are here for you. Thank u kind souls☺️</p>
+            </div>
+        </div>
+
+        <div class="donors-section">
+            <h2>🌟 Our Amazing Donors</h2>
+            <div class="donors-list" id="donorsList">
+                <span class="no-donors">No donors yet. Be the first!</span>
+            </div>
+        </div>
+
+        <div class="donation-section">
+            <h2>💰 Feed Us (Choose Your Mercy)</h2>
+            <div class="amount-buttons">
+                <button class="amount-btn" onclick="donate(2)">₹2</button>
+                <button class="amount-btn" onclick="donate(5)">₹5</button>
+                <button class="amount-btn" onclick="donate(10)">₹10</button>
+            </div>
+            <div class="custom-amount-section">
+                <input type="number" id="customAmountInput" placeholder="Enter custom amount (₹)" min="1">
+                <button class="custom-amount-btn" onclick="donateCustomAmount()">
+                    💝 Donate Custom Amount
+                </button>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <h2>🎭 Choose Your Action</h2>
+            <div class="action-buttons">
+                <button class="action-btn love" onclick="showModal('love')">
+                    ❤️ Show Love
+                </button>
+                <button class="action-btn scold" onclick="showModal('scold')">
+                    😤 Scold Us
+                </button>
+                <button class="action-btn talk" onclick="showModal('talk')">
+                    💬 Talk to Us
+                </button>
+                <button class="action-btn envy" onclick="showModal('envy')">
+                    😏 Share Envy
+                </button>
+                <button class="action-btn enemy" onclick="showModal('enemy')">
+                    👿 Enemy Story
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Follow us on X: <a href="https://x.com/BestOnInternt" target="_blank">@BestOnInternt</a></p>
+            <p class="disclaimer">All stories shared anonymously will be posted on our X account!</p>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <input type="text" id="donorNameInput" placeholder="Your name (optional)">
+            <textarea id="messageInput" placeholder="Type your message here..." rows="6"></textarea>
+            <button class="submit-btn" onclick="submitMessage()">Post to X (@BestOnInternt)</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, onSnapshot, doc, setDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsLlw3kv5nU3HQmwGnGrbYEyZJ7oGe4",
+            authDomain: "train-game-baz90.firebaseapp.com",
+            projectId: "train-game-baz90",
+            storageBucket: "train-game-baz90.firebasestorage.app",
+            messagingSenderId: "516766219873",
+            appId: "1:516766219873:web:38aec1e7e5ee866e32b420",
+            measurementId: "G-RSVLNY3K93"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables
+        window.RAZORPAY_LINK = 'https://razorpay.me/@smartclasses7445';
+        window.TWITTER_HANDLE = 'BestOnInternt';
+        window.currentAction = '';
+
+        // Listen to real-time stats updates
+        const statsRef = doc(db, 'stats', 'global');
+        onSnapshot(statsRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                document.getElementById('totalDonors').textContent = data.totalDonors || 0;
+                document.getElementById('totalAmount').textContent = data.totalAmount || 0;
+            }
+        });
+
+        // Listen to real-time donations updates
+        const donationsRef = collection(db, 'donations');
+        const donationsQuery = query(donationsRef, orderBy('timestamp', 'desc'));
+        onSnapshot(donationsQuery, (snapshot) => {
+            const donorsList = document.getElementById('donorsList');
+            
+            if (snapshot.empty) {
+                donorsList.innerHTML = '<span class="no-donors">No donors yet. Be the first!</span>';
+            } else {
+                const donors = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    donors.push({
+                        name: data.donorId || 'Anonymous',
+                        amount: data.amount
+                    });
+                });
+                
+                donorsList.innerHTML = donors.map(donor => `
+                    <div class="donor-tag">
+                        <span>${donor.name}</span>
+                        <span class="donor-amount">₹${donor.amount}</span>
+                    </div>
+                `).join('');
+            }
+        });
+
+        // Donation function
+        window.donate = async function(amount) {
+            const donorName = prompt("Enter your name (optional - press Cancel or leave blank to donate anonymously):");
+            const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
+            
+            try {
+                // Add donation to Firestore
+                await addDoc(collection(db, 'donations'), {
+                    amount: amount,
+                    donorId: name,
+                    message: '',
+                    timestamp: Date.now()
+                });
+
+                // Update stats
+                const statsRef = doc(db, 'stats', 'global');
+                const statsDoc = await getDoc(statsRef);
+                
+                if (statsDoc.exists()) {
+                    await updateDoc(statsRef, {
+                        totalDonors: increment(1),
+                        totalAmount: increment(amount)
+                    });
+                } else {
+                    await setDoc(statsRef, {
+                        totalDonors: 1,
+                        totalAmount: amount
+                    });
+                }
+
+                alert(`🙏 Thank you ${name} for choosing to donate ₹${amount}!\n\nYou will now be redirected to Razorpay payment page.`);
+                window.open(window.RAZORPAY_LINK, '_blank');
+            } catch (error) {
+                console.error("Error adding donation:", error);
+                alert("There was an error processing your donation. Please try again.");
+            }
+        };
+
+        // Custom amount donation function
+        window.donateCustomAmount = function() {
+            const customAmount = parseInt(document.getElementById('customAmountInput').value);
+            
+            if (!customAmount || customAmount < 1) {
+                alert('Please enter a valid amount (minimum ₹1)');
+                return;
+            }
+            
+            donate(customAmount);
+            document.getElementById('customAmountInput').value = '';
+        };
+
+        // Modal functions
+        window.showModal = function(action) {
+            window.currentAction = action;
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const messageInput = document.getElementById('messageInput');
+            
+            const titles = {
+                'love': '❤️ Show Us Some Love',
+                'scold': '😤 Scold Us (We Deserve It)',
+                'talk': '💬 Talk to Us',
+                'envy': '😏 Share Your Envy',
+                'enemy': '👿 Tell Us Your Enemy Story'
+            };
+            
+            const placeholders = {
+                'love': 'Share why you love us...',
+                'scold': 'Let it all out! Scold us properly...',
+                'talk': 'What\'s on your mind?',
+                'envy': 'Who are you envious of and why?',
+                'enemy': 'Tell us about your enemy. We\'ll expose them on X!'
+            };
+            
+            modalTitle.textContent = titles[action];
+            messageInput.placeholder = placeholders[action];
+            messageInput.value = '';
+            document.getElementById('donorNameInput').value = '';
+            modal.style.display = 'block';
+        };
+
+        window.closeModal = function() {
+            document.getElementById('modal').style.display = 'none';
+        };
+
+        window.submitMessage = async function() {
+            const message = document.getElementById('messageInput').value.trim();
+            const donorName = document.getElementById('donorNameInput').value.trim();
+            
+            if (!message) {
+                alert('Please write something!');
+                return;
+            }
+            
+            const actionEmojis = {
+                'love': '❤️',
+                'scold': '😤',
+                'talk': '💬',
+                'envy': '😏',
+                'enemy': '👿'
+            };
+            
+            const actionLabels = {
+                'love': 'Love',
+                'scold': 'Scolding',
+                'talk': 'Message',
+                'envy': 'Envy',
+                'enemy': 'Enemy Story'
+            };
+            
+            try {
+                // Save message to Firestore
+                await addDoc(collection(db, 'donations'), {
+                    amount: 0,
+                    donorId: donorName || 'Anonymous',
+                    message: message,
+                    timestamp: Date.now()
+                });
+
+                const tweetText = `${actionEmojis[window.currentAction]} ${actionLabels[window.currentAction]} from a visitor:\n\n"${message}"\n\n#DigitalBeggar`;
+                const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+                window.open(twitterUrl, '_blank');
+                
+                closeModal();
+                alert('Thank you! Your message has been saved and will be posted on X (@BestOnInternt).\n\nA new tab has opened where you can review and post the tweet.');
+            } catch (error) {
+                console.error("Error saving message:", error);
+                alert("There was an error saving your message. Please try again.");
+            }
+        };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
