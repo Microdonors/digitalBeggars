@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Beggar - Help Us Survive</title>
+    <title>Donor Announcer - Admin & Public View</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,741 +16,649 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* QR Code Overlay */
+        .qr-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            text-align: center;
+        }
+
+        .qr-overlay h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .qr-overlay img {
+            width: 200px;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .qr-overlay p {
+            margin-top: 10px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
             padding: 20px;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 25px;
+        .login-card {
+            background: white;
             padding: 40px;
-            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
         }
 
-        header {
+        .login-card h1 {
             text-align: center;
-            margin-bottom: 50px;
-            padding-bottom: 30px;
-            border-bottom: 3px solid #f0f0f0;
+            color: #667eea;
+            margin-bottom: 30px;
         }
 
-        h1 {
-            font-size: 3em;
-            background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-        }
-
-        .tagline {
-            color: #555;
-            font-size: 1.2em;
-            font-weight: 500;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 50px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 30px;
-            border-radius: 18px;
-            text-align: center;
-            color: white;
-            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.3);
-        }
-
-        .stat-number {
-            font-size: 2.8em;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            font-size: 1.1em;
-            opacity: 0.95;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .info-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 35px;
-            border-radius: 18px;
-            margin-bottom: 40px;
-            border-left: 5px solid #7e22ce;
-        }
-
-        .info-section h2 {
-            color: #1e3c72;
+        .form-group {
             margin-bottom: 20px;
-            font-size: 1.8em;
         }
 
-        .info-content {
-            color: #333;
-            line-height: 1.8;
-            font-size: 1.05em;
-        }
-
-        .info-content p {
-            margin-bottom: 12px;
-        }
-
-        .info-content strong {
-            color: #1e3c72;
+        .form-label {
             display: block;
-            margin-top: 15px;
             margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
         }
 
-        .donation-section {
-            margin-bottom: 50px;
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
         }
 
-        h2 {
-            color: #1e3c72;
-            margin-bottom: 25px;
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-msg {
+            color: #f5576c;
             text-align: center;
-            font-size: 1.8em;
+            margin-top: 10px;
+            display: none;
         }
 
-        .amount-buttons {
+        /* Admin Panel */
+        .admin-panel {
+            display: none;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .admin-content h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+
+        .amount-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .amount-btn {
-            padding: 25px;
-            font-size: 1.6em;
-            font-weight: bold;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
         }
 
         .amount-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        }
-
-        .amount-btn:active {
             transform: translateY(-2px);
         }
 
-        .custom-amount-section {
-            margin-top: 25px;
-            display: flex;
-            gap: 15px;
-            align-items: stretch;
-        }
-
-        #customAmountInput {
-            flex: 1;
-            padding: 15px;
-            font-size: 1.2em;
-            border: 3px solid #10b981;
-            border-radius: 12px;
-            font-family: inherit;
-            font-weight: 600;
-        }
-
-        #customAmountInput:focus {
-            outline: none;
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-        }
-
-        .custom-amount-btn {
-            flex: 1;
-            padding: 15px 25px;
-            font-size: 1.2em;
-            font-weight: bold;
-            background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+        .amount-btn.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(126, 34, 206, 0.3);
+            border-color: #667eea;
         }
 
-        .custom-amount-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(126, 34, 206, 0.4);
-            background: linear-gradient(135deg, #6b21a8 0%, #581c87 100%);
-        }
-
-        .custom-amount-btn:active {
-            transform: translateY(-2px);
-        }
-
-        .actions-section {
-            margin-bottom: 40px;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 18px;
-        }
-
-        .action-btn {
+        .announce-btn {
+            width: 100%;
             padding: 18px;
-            font-size: 1.05em;
-            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
+            margin-top: 20px;
         }
 
-        .action-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        .announce-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .action-btn.love {
-            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-        }
-
-        .action-btn.scold {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-
-        .action-btn.talk {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        }
-
-        .action-btn.envy {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        }
-
-        .action-btn.enemy {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-
-        .donors-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            padding: 35px;
-            border-radius: 18px;
-            margin-bottom: 40px;
-            border-left: 5px solid #f59e0b;
-        }
-
-        .donors-section h2 {
-            color: #92400e;
-            margin-bottom: 25px;
-        }
-
-        .donors-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            min-height: 50px;
-        }
-
-        .donor-tag {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            color: #92400e;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .donor-tag .donor-amount {
-            background: #f59e0b;
+        .logout-btn {
+            background: #f5576c;
             color: white;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.9em;
-        }
-
-        .no-donors {
-            color: #92400e;
-            font-style: italic;
-            opacity: 0.7;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 50px;
-            padding-top: 25px;
-            border-top: 3px solid #f0f0f0;
-            color: #666;
-        }
-
-        footer a {
-            color: #7e22ce;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s ease;
-        }
-
-        footer a:hover {
-            color: #6b21a8;
-            text-decoration: underline;
-        }
-
-        .disclaimer {
-            font-size: 0.95em;
-            margin-top: 15px;
-            font-style: italic;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 8% auto;
-            padding: 40px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 550px;
-            position: relative;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .close {
-            position: absolute;
-            right: 25px;
-            top: 20px;
-            font-size: 32px;
-            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            color: #999;
-            transition: color 0.3s ease;
         }
 
-        .close:hover {
-            color: #333;
+        .top-donors {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
         }
 
-        #modalTitle {
-            margin-bottom: 25px;
-            color: #1e3c72;
-        }
-
-        #donorNameInput {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1em;
-            font-family: inherit;
+        .top-donors h3 {
+            color: #667eea;
             margin-bottom: 15px;
         }
 
-        #donorNameInput:focus {
-            outline: none;
-            border-color: #7e22ce;
-        }
-
-        #messageInput {
-            width: 100%;
+        .donor-item {
+            background: white;
             padding: 15px;
-            border: 2px solid #ddd;
             border-radius: 10px;
-            font-size: 1em;
-            font-family: inherit;
-            resize: vertical;
-            margin-bottom: 25px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        #messageInput:focus {
-            outline: none;
-            border-color: #7e22ce;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
+        .donor-rank {
+            background: #667eea;
             color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.15em;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
 
-        .submit-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(126, 34, 206, 0.4);
+        /* Public View */
+        .public-view {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            position: relative;
         }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 25px;
-            }
-            
-            h1 {
-                font-size: 2.2em;
-            }
-            
-            .stats {
-                grid-template-columns: 1fr;
-            }
-            
-            .amount-buttons {
-                grid-template-columns: 1fr;
-            }
+        #video-container {
+            width: 100%;
+            height: 70vh;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
 
-            .custom-amount-section {
-                flex-direction: column;
-            }
+        #announcement-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-            .info-section, .donors-section {
-                padding: 25px;
+        .announcement-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            flex: 1;
+            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
+            border-radius: 30px 30px 0 0;
+            margin-top: -20px;
+            text-align: center;
+        }
+
+        .donor-name {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .donor-amount {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .status-message {
+            font-size: 18px;
+            color: #666;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            #video-container {
+                height: 60vh;
+            }
+            .qr-overlay {
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+            }
+            .qr-overlay img {
+                width: 150px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🙏 Digital Beggar</h1>
-            <p class="tagline">Your kindness keeps us alive... or roast us, we can take it!</p>
-        </header>
-
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalDonors">0</div>
-                <div class="stat-label">Kind Souls</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">₹<span id="totalAmount">0</span></div>
-                <div class="stat-label">Total Received</div>
-            </div>
-        </div>
-
-        <div class="info-section">
-            <h2>📖 Why Are We Begging & What You Can Get From Us</h2>
-            <div class="info-content">
-                <p>Our story is not smaller than a film,<br>
-                We are beggars online. First of kind.</p>
-                
-                <strong>What we can give u is:</strong>
-                <p>
-                    We listen to u,<br>
-                    We can face ur anger,<br>
-                    We are ready to get scold,<br>
-                    We are ready to chat,<br>
-                    We are ready to love & be hated,<br>
-                    We are ready to humilate your enemies<br>
-                    And more............
-                </p>
-                
-                <p><strong>Be the first few to support this!!</strong><br>
-                We are here for you. Thank u kind souls☺️</p>
-            </div>
-        </div>
-
-        <div class="donors-section">
-            <h2>🌟 Our Amazing Donors</h2>
-            <div class="donors-list" id="donorsList">
-                <span class="no-donors">No donors yet. Be the first!</span>
-            </div>
-        </div>
-
-        <div class="donation-section">
-            <h2>💰 Feed Us (Choose Your Mercy)</h2>
-            <div class="amount-buttons">
-                <button class="amount-btn" onclick="donate(2)">₹2</button>
-                <button class="amount-btn" onclick="donate(5)">₹5</button>
-                <button class="amount-btn" onclick="donate(10)">₹10</button>
-            </div>
-            <div class="custom-amount-section">
-                <input type="number" id="customAmountInput" placeholder="Enter custom amount (₹)" min="1">
-                <button class="custom-amount-btn" onclick="donateCustomAmount()">
-                    💝 Donate Custom Amount
-                </button>
-            </div>
-        </div>
-
-        <div class="actions-section">
-            <h2>🎭 Choose Your Action</h2>
-            <div class="action-buttons">
-                <button class="action-btn love" onclick="showModal('love')">
-                    ❤️ Show Love
-                </button>
-                <button class="action-btn scold" onclick="showModal('scold')">
-                    😤 Scold Us
-                </button>
-                <button class="action-btn talk" onclick="showModal('talk')">
-                    💬 Talk to Us
-                </button>
-                <button class="action-btn envy" onclick="showModal('envy')">
-                    😏 Share Envy
-                </button>
-                <button class="action-btn enemy" onclick="showModal('enemy')">
-                    👿 Enemy Story
-                </button>
-            </div>
-        </div>
-
-        <footer>
-            <p>Follow us on X: <a href="https://x.com/BestOnInternt" target="_blank">@BestOnInternt</a></p>
-            <p class="disclaimer">All stories shared anonymously will be posted on our X account!</p>
-        </footer>
+    <!-- QR Code Overlay (Always Visible) -->
+    <div class="qr-overlay" id="qrOverlay">
+        <h3>🙏 Support Us</h3>
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="UPI QR Code" id="qrImage">
+        <p>Scan to donate via UPI</p>
     </div>
 
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3 id="modalTitle"></h3>
-            <input type="text" id="donorNameInput" placeholder="Your name (optional)">
-            <textarea id="messageInput" placeholder="Type your message here..." rows="6"></textarea>
-            <button class="submit-btn" onclick="submitMessage()">Post to X (@BestOnInternt)</button>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <h1>🎙️ Donor Announcer</h1>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="loginEmail" class="form-input" placeholder="Enter admin email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="loginPassword" class="form-input" placeholder="Enter password">
+            </div>
+            <button class="btn" onclick="handleLogin()">Login as Admin</button>
+            <button class="btn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" onclick="showPublicView()">
+                View Public Announcements
+            </button>
+            <div class="error-msg" id="errorMsg">Invalid credentials!</div>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, onSnapshot, doc, setDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h2>🎙️ Donation Control Panel</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <div class="admin-content">
+            <h2>Enter Donor Details</h2>
 
-        // Firebase configuration
+            <div class="form-group">
+                <label class="form-label">Donor Name</label>
+                <input type="text" id="adminDonorName" class="form-input" placeholder="Enter donor's name">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Donation Amount (₹)</label>
+                <input type="number" id="adminDonorAmount" class="form-input" placeholder="Enter amount">
+            </div>
+
+            <button class="announce-btn" onclick="announceFromAdmin()">
+                🎙️ Announce Donation
+            </button>
+
+            <div class="status-message" id="adminStatus" style="display: none;"></div>
+
+            <div class="top-donors">
+                <h3>🏆 Top Donors</h3>
+                <div id="topDonorsList">
+                    <p style="text-align: center; color: #666;">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Public View -->
+    <div class="public-view" id="publicView">
+        <div id="video-container">
+            <video id="announcement-video" autoplay muted loop playsinline></video>
+        </div>
+
+        <div class="announcement-panel">
+            <div class="donor-name" id="publicDonorName">Waiting for announcement...</div>
+            <div class="donor-amount" id="publicDonorAmount"></div>
+            <div class="status-message" id="publicStatus">
+                The announcer will speak when a new donation is received!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBOaZSaLiw36uV8hMGwwGkbnrOyzjZq6s4",
-            authDomain: "train-game-be290.firebaseapp.com",
-            projectId: "train-game-be290",
-            storageBucket: "train-game-be290.firebasestorage.app",
+            apiKey: "AIzaSyDsLlw3kv5nU3HQmwGnGrbYEyZJ7oGe4",
+            authDomain: "train-game-baz90.firebaseapp.com",
+            projectId: "train-game-baz90",
+            storageBucket: "train-game-baz90.firebasestorage.app",
             messagingSenderId: "516766219873",
-            appId: "1:516766219873:web:386ec1e7e5e6866e32b420",
-            measurementId: "G-RSVLNY1K93"
+            appId: "1:516766219873:web:38aec1e7e5ee866e32b420",
+            measurementId: "G-RSVLNY3K93"
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // Global variables
-        window.RAZORPAY_LINK = 'https://razorpay.me/@smartclasses7445';
-        window.TWITTER_HANDLE = 'BestOnInternt';
-        window.currentAction = '';
+        // Admin credentials
+        const ADMIN_EMAIL = 'vishuu7306@gmail.com';
+        const ADMIN_PASSWORD = 'Vishall@#35';
 
-        // Listen to real-time stats updates
-        const statsRef = doc(db, 'stats', 'global');
-        onSnapshot(statsRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                document.getElementById('totalDonors').textContent = data.totalDonors || 0;
-                document.getElementById('totalAmount').textContent = data.totalAmount || 0;
-            }
-        });
+        // Video management
+        let currentVideoIndex = 1;
+        let isAnnouncing = false;
+        let announcementListener = null;
+        const loopVideos = Array.from({length: 10}, (_, i) => `int${i + 1}.mp4`);
 
-        // Listen to real-time donations updates
-        const donationsRef = collection(db, 'donations');
-        const donationsQuery = query(donationsRef, orderBy('timestamp', 'desc'));
-        onSnapshot(donationsQuery, (snapshot) => {
-            const donorsList = document.getElementById('donorsList');
-            
-            // Filter donations to only show ones with amount > 0
-            const donors = [];
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.amount && data.amount > 0) {
-                    donors.push({
-                        name: data.donorId || 'Anonymous',
-                        amount: data.amount
-                    });
-                }
-            });
-            
-            if (donors.length === 0) {
-                donorsList.innerHTML = '<span class="no-donors">No donors yet. Be the first!</span>';
+        // Load QR Code from uploaded image
+        const qrImage = document.getElementById('qrImage');
+        qrImage.src = 'attached_assets/Screenshot_20251230-214444.Razorpay_1767268215241.png';
+
+        // Login handler
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                errorMsg.style.display = 'none';
+                loadTopDonors();
             } else {
-                donorsList.innerHTML = donors.map(donor => `
-                    <div class="donor-tag">
-                        <span>${donor.name}</span>
-                        <span class="donor-amount">₹${donor.amount}</span>
-                    </div>
-                `).join('');
-            }
-        });
-
-        // Donation function
-        window.donate = async function(amount) {
-            // Ask for name first
-            const donorName = prompt(`You chose to donate ₹${amount}!\n\nEnter your name to be shown in our donors list (or press Cancel/leave blank to donate anonymously):`);
-            const name = donorName && donorName.trim() !== '' ? donorName.trim() : 'Anonymous';
-            
-            // Save to Firebase first
-            await saveDonation(amount, name);
-            
-            // Then redirect to payment
-            alert(`🙏 Thank you ${name}!\n\nYou will now be redirected to Razorpay to complete your ₹${amount} payment.`);
-            window.open(window.RAZORPAY_LINK, '_blank');
-        };
-
-        // Save donation to Firebase
-        async function saveDonation(amount, name) {
-            try {
-                // Add donation to Firestore
-                await addDoc(collection(db, 'donations'), {
-                    amount: amount,
-                    donorId: name,
-                    message: '',
-                    timestamp: Date.now()
-                });
-
-                // Update stats
-                const statsRef = doc(db, 'stats', 'global');
-                const statsDoc = await getDoc(statsRef);
-                
-                if (statsDoc.exists()) {
-                    await updateDoc(statsRef, {
-                        totalDonors: increment(1),
-                        totalAmount: increment(amount)
-                    });
-                } else {
-                    await setDoc(statsRef, {
-                        totalDonors: 1,
-                        totalAmount: amount
-                    });
-                }
-
-                alert(`✅ Your donation of ₹${amount} has been recorded! Thank you ${name}! 🙏`);
-            } catch (error) {
-                console.error("Error adding donation:", error);
-                alert("There was an error saving your donation details. But your payment should be processed. Please contact us on X @BestOnInternt");
+                errorMsg.style.display = 'block';
             }
         }
 
-        // Custom amount donation function
-        window.donateCustomAmount = function() {
-            const customAmount = parseInt(document.getElementById('customAmountInput').value);
+        function logout() {
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function showPublicView() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('publicView').style.display = 'flex';
+            startVideoLoop();
+            listenForAnnouncements();
+        }
+
+        // Video playback management
+        function startVideoLoop() {
+            const video = document.getElementById('announcement-video');
             
-            if (!customAmount || customAmount < 1) {
-                alert('Please enter a valid amount (minimum ₹1)');
+            function playNextVideo() {
+                if (isAnnouncing) {
+                    return;
+                }
+                
+                video.src = loopVideos[currentVideoIndex - 1];
+                video.load();
+                video.play().catch(err => console.log('Video play error:', err));
+                
+                currentVideoIndex = (currentVideoIndex % 10) + 1;
+            }
+
+            video.addEventListener('ended', playNextVideo);
+            playNextVideo();
+        }
+
+        async function playAnnouncementSequence(name, amount) {
+            if (isAnnouncing) return;
+            isAnnouncing = true;
+
+            const video = document.getElementById('announcement-video');
+            
+            // Play int11.mp4
+            video.src = 'int11.mp4';
+            video.load();
+            await video.play().catch(err => console.log('Video play error:', err));
+            
+            // Wait for int11 to finish
+            await new Promise(resolve => {
+                video.onended = resolve;
+            });
+
+            // Wait 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Play int12.mp4 and start TTS
+            video.src = 'int12.mp4';
+            video.loop = true;
+            video.load();
+            await video.play().catch(err => console.log('Video play error:', err));
+
+            // Speak announcement
+            await speakAnnouncement(name, amount);
+
+            // Wait for int12 to complete current loop
+            video.loop = false;
+            await new Promise(resolve => {
+                video.onended = resolve;
+            });
+
+            // Resume normal loop
+            isAnnouncing = false;
+            currentVideoIndex = 1;
+            startVideoLoop();
+        }
+
+        function speakAnnouncement(name, amount) {
+            return new Promise((resolve) => {
+                if (!window.speechSynthesis) {
+                    resolve();
+                    return;
+                }
+
+                const message = `Thank you ${name} for your generous donation of rupees ${amount}. Your support means the world to us and helps us continue our mission. May you be blessed abundantly!`;
+
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(message);
+                
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                utterance.volume = 1.0;
+
+                const voices = speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => 
+                    voice.name.includes('Female') || 
+                    voice.name.includes('Samantha') ||
+                    voice.lang.includes('en')
+                );
+                if (femaleVoice) utterance.voice = femaleVoice;
+
+                utterance.onend = () => resolve();
+                utterance.onerror = () => resolve();
+
+                speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Announcement from admin
+        async function announceFromAdmin() {
+            const name = document.getElementById('adminDonorName').value.trim();
+            const amount = parseInt(document.getElementById('adminDonorAmount').value);
+            const statusDiv = document.getElementById('adminStatus');
+
+            if (!name || !amount || amount <= 0) {
+                statusDiv.textContent = '⚠️ Please enter valid donor name and amount';
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fff3e0';
                 return;
             }
-            
-            donate(customAmount);
-            document.getElementById('customAmountInput').value = '';
-        };
 
-        // Make saveDonation available globally
-        window.saveDonation = saveDonation;
+            statusDiv.textContent = '📢 Saving donation...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#e8f5e8';
 
-        // Modal functions
-        window.showModal = function(action) {
-            window.currentAction = action;
-            const modal = document.getElementById('modal');
-            const modalTitle = document.getElementById('modalTitle');
-            const messageInput = document.getElementById('messageInput');
-            
-            const titles = {
-                'love': '❤️ Show Us Some Love',
-                'scold': '😤 Scold Us (We Deserve It)',
-                'talk': '💬 Talk to Us',
-                'envy': '😏 Share Your Envy',
-                'enemy': '👿 Tell Us Your Enemy Story'
-            };
-            
-            const placeholders = {
-                'love': 'Share why you love us...',
-                'scold': 'Let it all out! Scold us properly...',
-                'talk': 'What\'s on your mind?',
-                'envy': 'Who are you envious of and why?',
-                'enemy': 'Tell us about your enemy. We\'ll expose them on X!'
-            };
-            
-            modalTitle.textContent = titles[action];
-            messageInput.placeholder = placeholders[action];
-            messageInput.value = '';
-            document.getElementById('donorNameInput').value = '';
-            modal.style.display = 'block';
-        };
-
-        window.closeModal = function() {
-            document.getElementById('modal').style.display = 'none';
-        };
-
-        window.submitMessage = async function() {
-            const message = document.getElementById('messageInput').value.trim();
-            const donorName = document.getElementById('donorNameInput').value.trim();
-            
-            if (!message) {
-                alert('Please write something!');
-                return;
-            }
-            
-            const actionEmojis = {
-                'love': '❤️',
-                'scold': '😤',
-                'talk': '💬',
-                'envy': '😏',
-                'enemy': '👿'
-            };
-            
-            const actionLabels = {
-                'love': 'Love',
-                'scold': 'Scolding',
-                'talk': 'Message',
-                'envy': 'Envy',
-                'enemy': 'Enemy Story'
-            };
-            
             try {
-                // Save message to Firestore
-                await addDoc(collection(db, 'donations'), {
-                    amount: 0,
-                    donorId: donorName || 'Anonymous',
-                    message: message,
-                    timestamp: Date.now()
+                // Save to Firebase
+                await db.collection('donations').add({
+                    name: name,
+                    amount: amount,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    announced: false
                 });
 
-                const tweetText = `${actionEmojis[window.currentAction]} ${actionLabels[window.currentAction]} from a visitor:\n\n"${message}"\n\n#DigitalBeggar`;
-                const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-                window.open(twitterUrl, '_blank');
+                statusDiv.textContent = '✅ Donation saved and announced!';
+                document.getElementById('adminDonorName').value = '';
+                document.getElementById('adminDonorAmount').value = '';
                 
-                closeModal();
-                alert('Thank you! Your message has been saved and will be posted on X (@BestOnInternt).\n\nA new tab has opened where you can review and post the tweet.');
-            } catch (error) {
-                console.error("Error saving message:", error);
-                alert("There was an error saving your message. Please try again.");
-            }
-        };
+                loadTopDonors();
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('modal');
-            if (event.target === modal) {
-                closeModal();
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            } catch (error) {
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                statusDiv.style.background = '#ffebee';
             }
-        };
+        }
+
+        // Listen for new announcements
+        function listenForAnnouncements() {
+            if (announcementListener) return;
+
+            announcementListener = db.collection('donations')
+                .where('announced', '==', false)
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(async change => {
+                        if (change.type === 'added') {
+                            const donation = change.doc.data();
+                            
+                            // Update UI
+                            document.getElementById('publicDonorName').textContent = donation.name;
+                            document.getElementById('publicDonorAmount').textContent = `₹${donation.amount}`;
+                            document.getElementById('publicStatus').textContent = '🎙️ Announcing now...';
+
+                            // Play announcement sequence
+                            await playAnnouncementSequence(donation.name, donation.amount);
+
+                            // Mark as announced
+                            await change.doc.ref.update({ announced: true });
+
+                            document.getElementById('publicStatus').textContent = '✅ Announcement complete!';
+                        }
+                    });
+                });
+        }
+
+        // Load top donors
+        async function loadTopDonors() {
+            try {
+                const snapshot = await db.collection('donations')
+                    .orderBy('amount', 'desc')
+                    .limit(5)
+                    .get();
+
+                const listDiv = document.getElementById('topDonorsList');
+                listDiv.innerHTML = '';
+
+                if (snapshot.empty) {
+                    listDiv.innerHTML = '<p style="text-align: center; color: #666;">No donations yet</p>';
+                    return;
+                }
+
+                snapshot.forEach((doc, index) => {
+                    const donation = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'donor-item';
+                    item.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="donor-rank">${index + 1}</div>
+                            <div>
+                                <div style="font-weight: bold;">${donation.name}</div>
+                                <div style="font-size: 14px; color: #666;">
+                                    ${donation.timestamp ? new Date(donation.timestamp.toDate()).toLocaleDateString() : 'Just now'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size: 20px; font-weight: bold; color: #667eea;">
+                            ₹${donation.amount}
+                        </div>
+                    `;
+                    listDiv.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading top donors:', error);
+            }
+        }
+
+        // Load voices for TTS
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+        }
     </script>
 </body>
 </html>
