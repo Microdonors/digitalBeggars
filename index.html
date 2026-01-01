@@ -336,7 +336,7 @@
     <!-- QR Code Overlay (Always Visible) -->
     <div class="qr-overlay" id="qrOverlay">
         <h3>🙏 Support Us</h3>
-        <img src="attached_assets/Screenshot_20251230-214444.Razorpay_1767268215241.png" alt="UPI QR Code" id="qrImage">
+        <img src="qr.png" alt="UPI QR Code" id="qrImage" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22Arial%22 font-size=%2214%22%3EQR Code%3C/text%3E%3C/svg%3E'">
         <p>Scan to donate via UPI</p>
     </div>
 
@@ -509,13 +509,20 @@
                     return;
                 }
                 
-                video.src = loopVideos[currentVideoIndex - 1];
+                const videoPath = loopVideos[currentVideoIndex - 1];
+                video.src = videoPath;
                 video.load();
-                video.play().catch(err => console.log('Video play error:', err));
+                video.play().catch(err => {
+                    console.log(`Video ${videoPath} play error:`, err);
+                    // Skip to next video if current one fails
+                    currentVideoIndex = (currentVideoIndex % 10) + 1;
+                    setTimeout(playNextVideo, 100);
+                });
                 
                 currentVideoIndex = (currentVideoIndex % 10) + 1;
             }
 
+            video.removeEventListener('ended', playNextVideo);
             video.addEventListener('ended', playNextVideo);
             playNextVideo();
         }
@@ -530,13 +537,20 @@
                     return;
                 }
                 
-                video.src = loopVideos[adminVideoIndex - 1];
+                const videoPath = loopVideos[adminVideoIndex - 1];
+                video.src = videoPath;
                 video.load();
-                video.play().catch(err => console.log('Admin video play error:', err));
+                video.play().catch(err => {
+                    console.log(`Admin video ${videoPath} play error:`, err);
+                    // Skip to next video if current one fails
+                    adminVideoIndex = (adminVideoIndex % 10) + 1;
+                    setTimeout(playNextAdminVideo, 100);
+                });
                 
                 adminVideoIndex = (adminVideoIndex % 10) + 1;
             }
 
+            video.removeEventListener('ended', playNextAdminVideo);
             video.addEventListener('ended', playNextAdminVideo);
             playNextAdminVideo();
         }
@@ -550,9 +564,10 @@
             amountElement.textContent = `₹${amount}`;
             statusElement.textContent = '🎙️ Announcing now...';
             
-            // Play int11.mp4
+            // Play int11.mp4 with audio
             videoElement.src = 'int11.mp4';
             videoElement.loop = false;
+            videoElement.muted = false;
             videoElement.load();
             await videoElement.play().catch(err => console.log('Video play error:', err));
             
@@ -564,9 +579,10 @@
             // Wait 2 seconds
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Play int12.mp4 and start TTS
+            // Play int12.mp4 and start TTS with audio
             videoElement.src = 'int12.mp4';
             videoElement.loop = true;
+            videoElement.muted = false;
             videoElement.load();
             await videoElement.play().catch(err => console.log('Video play error:', err));
 
@@ -586,6 +602,9 @@
             setTimeout(() => {
                 isAnnouncing = false;
                 currentVideoIndex = 1;
+                
+                // Remute video for loop
+                videoElement.muted = true;
                 
                 // Restart loops
                 if (document.getElementById('publicView').style.display === 'flex') {
@@ -648,13 +667,15 @@
 
             try {
                 // Save to Firebase
-                await db.collection('donations').add({
+                const docRef = await db.collection('donations').add({
                     name: name,
                     amount: amount,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    announced: false
+                    announced: false,
+                    createdAt: new Date().toISOString()
                 });
 
+                console.log('Donation saved with ID:', docRef.id);
                 statusDiv.textContent = '✅ Donation saved successfully! Announcement starting...';
                 document.getElementById('adminDonorName').value = '';
                 document.getElementById('adminDonorAmount').value = '';
@@ -671,6 +692,7 @@
                 statusDiv.textContent = '❌ Error: ' + error.message;
                 statusDiv.style.background = '#ffebee';
                 console.error('Firebase error:', error);
+                console.error('Firebase error details:', error.code, error.message);
             }
         }
 
@@ -732,7 +754,7 @@
             try {
                 const snapshot = await db.collection('donations')
                     .orderBy('amount', 'desc')
-                    .limit(5)
+                    .limit(2)
                     .get();
 
                 const listDiv = document.getElementById('topDonorsList');
