@@ -24,32 +24,32 @@
         /* QR Code Overlay */
         .qr-overlay {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             background: white;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
             z-index: 2000;
             text-align: center;
         }
 
         .qr-overlay h3 {
             color: #667eea;
-            margin-bottom: 10px;
-            font-size: 16px;
+            margin-bottom: 5px;
+            font-size: 12px;
         }
 
         .qr-overlay img {
-            width: 200px;
+            width: 120px;
             height: auto;
-            border-radius: 10px;
+            border-radius: 8px;
         }
 
         .qr-overlay p {
-            margin-top: 10px;
+            margin-top: 5px;
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
         }
 
         /* Login Screen */
@@ -322,12 +322,18 @@
                 height: 60vh;
             }
             .qr-overlay {
-                top: 10px;
-                right: 10px;
-                padding: 10px;
+                top: 5px;
+                right: 5px;
+                padding: 5px;
             }
             .qr-overlay img {
-                width: 150px;
+                width: 80px;
+            }
+            .qr-overlay h3 {
+                font-size: 10px;
+            }
+            .qr-overlay p {
+                font-size: 8px;
             }
         }
     </style>
@@ -336,8 +342,8 @@
     <!-- QR Code Overlay (Always Visible) -->
     <div class="qr-overlay" id="qrOverlay">
         <h3>🙏 Support Us</h3>
-        <img src="qr.png" alt="UPI QR Code" id="qrImage" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect width=%22200%22 height=%22200%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22Arial%22 font-size=%2214%22%3EQR Code%3C/text%3E%3C/svg%3E'">
-        <p>Scan to donate via UPI</p>
+        <img src="qr.jpeg" alt="UPI QR Code" id="qrImage" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22Arial%22 font-size=%2212%22%3EQR Code%3C/text%3E%3C/svg%3E'">
+        <p>Scan to donate</p>
     </div>
 
     <!-- Login Screen -->
@@ -393,7 +399,7 @@
                 <div class="status-message" id="adminStatus" style="display: none;"></div>
 
                 <div class="top-donors">
-                    <h3>🏆 Top Donors</h3>
+                    <h3>🏆 Top 2 Donors</h3>
                     <div id="topDonorsList">
                         <p style="text-align: center; color: #666;">Loading...</p>
                     </div>
@@ -451,11 +457,12 @@
         const ADMIN_PASSWORD = 'Vishall@#35';
 
         // Video management
-        let currentVideoIndex = 1;
+        let currentVideoIndex = 0;
+        let adminVideoIndex = 0;
         let isAnnouncing = false;
         let announcementListener = null;
+        const loopVideos = ['int1.mp4', 'int2.mp4', 'int3.mp4', 'int4.mp4', 'int5.mp4', 'int6.mp4', 'int7.mp4', 'int8.mp4', 'int9.mp4', 'int10.mp4'];
         let selectedAmount = null;
-        const loopVideos = Array.from({length: 10}, (_, i) => `int${i + 1}.mp4`);
 
         // Login handler
         function handleLogin() {
@@ -493,7 +500,6 @@
             selectedAmount = amount;
             document.getElementById('adminDonorAmount').value = amount;
             
-            // Update button styles
             document.querySelectorAll('.amount-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
@@ -509,49 +515,64 @@
                     return;
                 }
                 
-                const videoPath = loopVideos[currentVideoIndex - 1];
+                const videoPath = loopVideos[currentVideoIndex];
                 video.src = videoPath;
                 video.load();
-                video.play().catch(err => {
-                    console.log(`Video ${videoPath} play error:`, err);
-                    // Skip to next video if current one fails
-                    currentVideoIndex = (currentVideoIndex % 10) + 1;
+                
+                video.play().then(() => {
+                    console.log(`Playing ${videoPath}`);
+                }).catch(err => {
+                    console.log(`Video ${videoPath} failed, skipping:`, err);
+                    currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
                     setTimeout(playNextVideo, 100);
                 });
-                
-                currentVideoIndex = (currentVideoIndex % 10) + 1;
             }
 
-            video.removeEventListener('ended', playNextVideo);
-            video.addEventListener('ended', playNextVideo);
+            video.removeEventListener('ended', onVideoEnded);
+            
+            function onVideoEnded() {
+                if (!isAnnouncing) {
+                    currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
+                    playNextVideo();
+                }
+            }
+            
+            video.addEventListener('ended', onVideoEnded);
             playNextVideo();
         }
 
         // Video playback for admin preview
         function startAdminVideoLoop() {
             const video = document.getElementById('admin-announcement-video');
-            let adminVideoIndex = 1;
             
             function playNextAdminVideo() {
                 if (isAnnouncing) {
                     return;
                 }
                 
-                const videoPath = loopVideos[adminVideoIndex - 1];
+                const videoPath = loopVideos[adminVideoIndex];
                 video.src = videoPath;
                 video.load();
-                video.play().catch(err => {
-                    console.log(`Admin video ${videoPath} play error:`, err);
-                    // Skip to next video if current one fails
-                    adminVideoIndex = (adminVideoIndex % 10) + 1;
+                
+                video.play().then(() => {
+                    console.log(`Admin playing ${videoPath}`);
+                }).catch(err => {
+                    console.log(`Admin video ${videoPath} failed, skipping:`, err);
+                    adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
                     setTimeout(playNextAdminVideo, 100);
                 });
-                
-                adminVideoIndex = (adminVideoIndex % 10) + 1;
             }
 
-            video.removeEventListener('ended', playNextAdminVideo);
-            video.addEventListener('ended', playNextAdminVideo);
+            video.removeEventListener('ended', onAdminVideoEnded);
+            
+            function onAdminVideoEnded() {
+                if (!isAnnouncing) {
+                    adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
+                    playNextAdminVideo();
+                }
+            }
+            
+            video.addEventListener('ended', onAdminVideoEnded);
             playNextAdminVideo();
         }
 
@@ -569,12 +590,15 @@
             videoElement.loop = false;
             videoElement.muted = false;
             videoElement.load();
-            await videoElement.play().catch(err => console.log('Video play error:', err));
             
-            // Wait for int11 to finish
-            await new Promise(resolve => {
-                videoElement.onended = resolve;
-            });
+            try {
+                await videoElement.play();
+                await new Promise(resolve => {
+                    videoElement.onended = resolve;
+                });
+            } catch (err) {
+                console.log('Video play error:', err);
+            }
 
             // Wait 2 seconds
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -584,7 +608,12 @@
             videoElement.loop = true;
             videoElement.muted = false;
             videoElement.load();
-            await videoElement.play().catch(err => console.log('Video play error:', err));
+            
+            try {
+                await videoElement.play();
+            } catch (err) {
+                console.log('Video play error:', err);
+            }
 
             // Speak announcement
             await speakAnnouncement(name, amount);
@@ -601,7 +630,8 @@
             // Resume normal loop after a short delay
             setTimeout(() => {
                 isAnnouncing = false;
-                currentVideoIndex = 1;
+                currentVideoIndex = 0;
+                adminVideoIndex = 0;
                 
                 // Remute video for loop
                 videoElement.muted = true;
@@ -667,16 +697,22 @@
 
             try {
                 // Save to Firebase
-                const docRef = await db.collection('donations').add({
+                const donationData = {
                     name: name,
                     amount: amount,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     announced: false,
                     createdAt: new Date().toISOString()
-                });
+                };
+                
+                console.log('Saving donation:', donationData);
+                
+                const docRef = await db.collection('donations').add(donationData);
 
                 console.log('Donation saved with ID:', docRef.id);
                 statusDiv.textContent = '✅ Donation saved successfully! Announcement starting...';
+                
+                // Clear form
                 document.getElementById('adminDonorName').value = '';
                 document.getElementById('adminDonorAmount').value = '';
                 selectedAmount = null;
@@ -692,21 +728,25 @@
                 statusDiv.textContent = '❌ Error: ' + error.message;
                 statusDiv.style.background = '#ffebee';
                 console.error('Firebase error:', error);
-                console.error('Firebase error details:', error.code, error.message);
+                console.error('Firebase error code:', error.code);
+                console.error('Firebase error message:', error.message);
             }
         }
 
         // Listen for new announcements in public view
         function listenForAnnouncements() {
-            if (announcementListener) return;
+            if (announcementListener) {
+                announcementListener();
+            }
 
             announcementListener = db.collection('donations')
                 .where('announced', '==', false)
                 .orderBy('timestamp', 'desc')
-                .onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(async change => {
+                .onSnapshot(async snapshot => {
+                    for (const change of snapshot.docChanges()) {
                         if (change.type === 'added') {
                             const donation = change.doc.data();
+                            console.log('Public view: New donation detected', donation);
                             
                             // Play announcement sequence
                             await playAnnouncementSequence(
@@ -720,8 +760,11 @@
 
                             // Mark as announced
                             await change.doc.ref.update({ announced: true });
+                            console.log('Marked as announced');
                         }
-                    });
+                    }
+                }, error => {
+                    console.error('Listener error:', error);
                 });
         }
 
@@ -730,10 +773,11 @@
             db.collection('donations')
                 .where('announced', '==', false)
                 .orderBy('timestamp', 'desc')
-                .onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(async change => {
+                .onSnapshot(async snapshot => {
+                    for (const change of snapshot.docChanges()) {
                         if (change.type === 'added') {
                             const donation = change.doc.data();
+                            console.log('Admin view: New donation detected', donation);
                             
                             // Play announcement sequence in admin preview
                             await playAnnouncementSequence(
@@ -745,7 +789,9 @@
                                 document.getElementById('adminPreviewStatus')
                             );
                         }
-                    });
+                    }
+                }, error => {
+                    console.error('Admin listener error:', error);
                 });
         }
 
@@ -794,6 +840,11 @@
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
         }
+
+        // Test Firebase connection on load
+        db.collection('donations').limit(1).get()
+            .then(() => console.log('Firebase connected successfully'))
+            .catch(err => console.error('Firebase connection error:', err));
     </script>
 </body>
 </html>
