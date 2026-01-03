@@ -342,7 +342,7 @@
     <!-- QR Code Overlay (Always Visible) -->
     <div class="qr-overlay" id="qrOverlay">
         <h3>🙏 Support Us</h3>
-        <img src="qr.jpeg" alt="UPI QR Code" id="qrImage" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f0f0f0%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-family=%22Arial%22 font-size=%2212%22%3EQR Code%3C/text%3E%3C/svg%3E'">
+        <img src="qr.jpeg" alt="UPI QR Code" id="qrImage" style="display: block; border: 2px solid #667eea;">
         <p>Scan to donate</p>
     </div>
 
@@ -463,6 +463,7 @@
         let announcementListener = null;
         const loopVideos = ['int1.mp4', 'int2.mp4', 'int3.mp4', 'int4.mp4', 'int5.mp4', 'int6.mp4', 'int7.mp4', 'int8.mp4', 'int9.mp4', 'int10.mp4'];
         let selectedAmount = null;
+        const VIDEO_DURATION = 36000; // 36 seconds in milliseconds
 
         // Login handler
         function handleLogin() {
@@ -509,6 +510,7 @@
         // Video playback management for public view
         function startVideoLoop() {
             const video = document.getElementById('announcement-video');
+            video.muted = false; // Enable audio
             
             function playNextVideo() {
                 if (isAnnouncing) {
@@ -521,6 +523,13 @@
                 
                 video.play().then(() => {
                     console.log(`Playing ${videoPath}`);
+                    // Set timer for 36 seconds
+                    setTimeout(() => {
+                        if (!isAnnouncing) {
+                            currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
+                            playNextVideo();
+                        }
+                    }, VIDEO_DURATION);
                 }).catch(err => {
                     console.log(`Video ${videoPath} failed, skipping:`, err);
                     currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
@@ -528,22 +537,13 @@
                 });
             }
 
-            video.removeEventListener('ended', onVideoEnded);
-            
-            function onVideoEnded() {
-                if (!isAnnouncing) {
-                    currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
-                    playNextVideo();
-                }
-            }
-            
-            video.addEventListener('ended', onVideoEnded);
             playNextVideo();
         }
 
         // Video playback for admin preview
         function startAdminVideoLoop() {
             const video = document.getElementById('admin-announcement-video');
+            video.muted = false; // Enable audio
             
             function playNextAdminVideo() {
                 if (isAnnouncing) {
@@ -556,6 +556,13 @@
                 
                 video.play().then(() => {
                     console.log(`Admin playing ${videoPath}`);
+                    // Set timer for 36 seconds
+                    setTimeout(() => {
+                        if (!isAnnouncing) {
+                            adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
+                            playNextAdminVideo();
+                        }
+                    }, VIDEO_DURATION);
                 }).catch(err => {
                     console.log(`Admin video ${videoPath} failed, skipping:`, err);
                     adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
@@ -563,16 +570,6 @@
                 });
             }
 
-            video.removeEventListener('ended', onAdminVideoEnded);
-            
-            function onAdminVideoEnded() {
-                if (!isAnnouncing) {
-                    adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
-                    playNextAdminVideo();
-                }
-            }
-            
-            video.addEventListener('ended', onAdminVideoEnded);
             playNextAdminVideo();
         }
 
@@ -603,10 +600,10 @@
             // Wait 2 seconds
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Play int12.mp4 and start TTS with audio
+            // Play int12.mp4 without audio (muted during announcement speech)
             videoElement.src = 'int12.mp4';
             videoElement.loop = true;
-            videoElement.muted = false;
+            videoElement.muted = true; // Muted so announcement audio is clear
             videoElement.load();
             
             try {
@@ -618,10 +615,15 @@
             // Speak announcement
             await speakAnnouncement(name, amount);
 
-            // Wait for int12 to complete current loop
+            // Stop looping int12 and wait for it to finish
             videoElement.loop = false;
             await new Promise(resolve => {
-                videoElement.onended = resolve;
+                const checkEnded = setInterval(() => {
+                    if (videoElement.ended || videoElement.currentTime >= videoElement.duration - 0.1) {
+                        clearInterval(checkEnded);
+                        resolve();
+                    }
+                }, 100);
             });
 
             // Update status
@@ -633,10 +635,7 @@
                 currentVideoIndex = 0;
                 adminVideoIndex = 0;
                 
-                // Remute video for loop
-                videoElement.muted = true;
-                
-                // Restart loops
+                // Restart loops with audio
                 if (document.getElementById('publicView').style.display === 'flex') {
                     startVideoLoop();
                 }
@@ -696,11 +695,11 @@
             statusDiv.style.background = '#e8f5e8';
 
             try {
-                // Save to Firebase
+                // Save to Firebase with proper timestamp
                 const donationData = {
                     name: name,
                     amount: amount,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    timestamp: firebase.firestore.Timestamp.now(),
                     announced: false,
                     createdAt: new Date().toISOString()
                 };
@@ -710,7 +709,10 @@
                 const docRef = await db.collection('donations').add(donationData);
 
                 console.log('Donation saved with ID:', docRef.id);
-                statusDiv.textContent = '✅ Donation saved successfully! Announcement starting...';
+                statusDiv.textContent = '✅ Donation saved successfully! Announcement will start...';
+                
+                // Wait a moment to ensure Firestore propagation
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // Clear form
                 document.getElementById('adminDonorName').value = '';
@@ -728,8 +730,7 @@
                 statusDiv.textContent = '❌ Error: ' + error.message;
                 statusDiv.style.background = '#ffebee';
                 console.error('Firebase error:', error);
-                console.error('Firebase error code:', error.code);
-                console.error('Firebase error message:', error.message);
+                console.error('Firebase error details:', error);
             }
         }
 
