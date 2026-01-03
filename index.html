@@ -24,32 +24,35 @@
         /* QR Code Overlay */
         .qr-overlay {
             position: fixed;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             background: white;
-            padding: 8px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
             text-align: center;
         }
 
         .qr-overlay h3 {
             color: #667eea;
-            margin-bottom: 5px;
-            font-size: 12px;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
         }
 
         .qr-overlay img {
-            width: 120px;
-            height: auto;
-            border-radius: 8px;
+            width: 180px;
+            height: 180px;
+            border-radius: 10px;
+            display: block !important;
         }
 
         .qr-overlay p {
-            margin-top: 5px;
+            margin-top: 8px;
             color: #666;
-            font-size: 10px;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         /* Login Screen */
@@ -342,7 +345,7 @@
     <!-- QR Code Overlay (Always Visible) -->
     <div class="qr-overlay" id="qrOverlay">
         <h3>🙏 Support Us</h3>
-        <img src="qr.jpeg" alt="UPI QR Code" id="qrImage" style="display: block; border: 2px solid #667eea;">
+        <img src="qr.jpeg" alt="UPI QR Code" id="qrImage" onerror="this.style.display='none'; this.parentElement.innerHTML='<p>QR Code not found</p>';">
         <p>Scan to donate</p>
     </div>
 
@@ -461,9 +464,14 @@
         let adminVideoIndex = 0;
         let isAnnouncing = false;
         let announcementListener = null;
+        let adminAnnouncementListener = null;
         const loopVideos = ['int1.mp4', 'int2.mp4', 'int3.mp4', 'int4.mp4', 'int5.mp4', 'int6.mp4', 'int7.mp4', 'int8.mp4', 'int9.mp4', 'int10.mp4'];
         let selectedAmount = null;
         const VIDEO_DURATION = 36000; // 36 seconds in milliseconds
+        let savedVideoTime = 0;
+        let savedAdminVideoTime = 0;
+        let videoTimeout = null;
+        let adminVideoTimeout = null;
 
         // Login handler
         function handleLogin() {
@@ -508,7 +516,7 @@
         }
 
         // Video playback management for public view
-        function startVideoLoop() {
+        function startVideoLoop(resumeFrom = 0) {
             const video = document.getElementById('announcement-video');
             video.muted = false; // Enable audio
             
@@ -523,10 +531,27 @@
                 
                 video.play().then(() => {
                     console.log(`Playing ${videoPath}`);
+                    
+                    // Resume from saved position if available
+                    if (resumeFrom > 0) {
+                        video.currentTime = resumeFrom;
+                        resumeFrom = 0;
+                    }
+                    
+                    // Save current time periodically
+                    const saveInterval = setInterval(() => {
+                        if (!isAnnouncing) {
+                            savedVideoTime = video.currentTime;
+                        }
+                    }, 1000);
+                    
                     // Set timer for 36 seconds
-                    setTimeout(() => {
+                    if (videoTimeout) clearTimeout(videoTimeout);
+                    videoTimeout = setTimeout(() => {
+                        clearInterval(saveInterval);
                         if (!isAnnouncing) {
                             currentVideoIndex = (currentVideoIndex + 1) % loopVideos.length;
+                            savedVideoTime = 0;
                             playNextVideo();
                         }
                     }, VIDEO_DURATION);
@@ -541,7 +566,7 @@
         }
 
         // Video playback for admin preview
-        function startAdminVideoLoop() {
+        function startAdminVideoLoop(resumeFrom = 0) {
             const video = document.getElementById('admin-announcement-video');
             video.muted = false; // Enable audio
             
@@ -556,10 +581,27 @@
                 
                 video.play().then(() => {
                     console.log(`Admin playing ${videoPath}`);
+                    
+                    // Resume from saved position if available
+                    if (resumeFrom > 0) {
+                        video.currentTime = resumeFrom;
+                        resumeFrom = 0;
+                    }
+                    
+                    // Save current time periodically
+                    const saveInterval = setInterval(() => {
+                        if (!isAnnouncing) {
+                            savedAdminVideoTime = video.currentTime;
+                        }
+                    }, 1000);
+                    
                     // Set timer for 36 seconds
-                    setTimeout(() => {
+                    if (adminVideoTimeout) clearTimeout(adminVideoTimeout);
+                    adminVideoTimeout = setTimeout(() => {
+                        clearInterval(saveInterval);
                         if (!isAnnouncing) {
                             adminVideoIndex = (adminVideoIndex + 1) % loopVideos.length;
+                            savedAdminVideoTime = 0;
                             playNextAdminVideo();
                         }
                     }, VIDEO_DURATION);
@@ -632,15 +674,13 @@
             // Resume normal loop after a short delay
             setTimeout(() => {
                 isAnnouncing = false;
-                currentVideoIndex = 0;
-                adminVideoIndex = 0;
                 
-                // Restart loops with audio
+                // Restart loops with audio from saved position
                 if (document.getElementById('publicView').style.display === 'flex') {
-                    startVideoLoop();
+                    startVideoLoop(savedVideoTime);
                 }
                 if (document.getElementById('adminPanel').style.display === 'block') {
-                    startAdminVideoLoop();
+                    startAdminVideoLoop(savedAdminVideoTime);
                 }
             }, 1000);
         }
@@ -771,7 +811,11 @@
 
         // Listen for new announcements in admin view
         function listenForAnnouncementsAdmin() {
-            db.collection('donations')
+            if (adminAnnouncementListener) {
+                adminAnnouncementListener();
+            }
+
+            adminAnnouncementListener = db.collection('donations')
                 .where('announced', '==', false)
                 .orderBy('timestamp', 'desc')
                 .onSnapshot(async snapshot => {
